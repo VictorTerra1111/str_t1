@@ -18,7 +18,7 @@ TO DO:
 Decidir o que fazer quando receber valores invalidos de n, t e das tarefas
 */
 
-#define DEBUG 1
+#define DEBUG 0
 #define MAX_TAREFAS 26
 #define MAX_VALOR 2048
 
@@ -158,8 +158,6 @@ int main(void) {
             ready[i].pronta = 0;
         }
 
-        // fim da chamada da funcao  
-
         // inicio do loop do escalonador
         int t_atual = 0;
         int tarefa_mais_prioritaria = -1; // posicao da tarefa mais prioritaria
@@ -191,7 +189,9 @@ int main(void) {
 
             // 6. Verificar se houve troca/preempção
             if(tarefa_atual != -1) {
-                if(tarefa_anterior != -1 && tarefa_anterior != tarefa_atual) {
+                if(tarefa_anterior != tarefa_atual) {
+                    // era: if(tarefa_anterior != -1 && tarefa_anterior != tarefa_atual) {
+
                     escalonamentos[exec].tr++;
 
                     if(ready[tarefa_anterior].c_falt > 0) {
@@ -217,8 +217,13 @@ int main(void) {
                 tarefa_anterior = tarefa_atual;
             }
             else {
-                escalonamentos[exec].gantt[t_atual] = '-';
+                if(tarefa_anterior != -1) {
+                    escalonamentos[exec].tr++;
+                }
+
+                escalonamentos[exec].gantt[t_atual] = '.';
                 tarefa_anterior = -1;
+
             }
         }
 
@@ -226,7 +231,6 @@ int main(void) {
     }
 
     // fim do loop do escalonador
-
     // inicio do loop de simulacao
     for (int i = 0; i < exec; i++) {
         printf("%s\n", escalonamentos[i].gantt);
