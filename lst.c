@@ -16,11 +16,13 @@ Tslack = deadline - tempo_atual - computacao_restante
 /*
 TO DO:
 Decidir o que fazer quando receber valores invalidos de n, t e das tarefas
+Verificar se alguma tarefa perdeu deadline
 */
 
 #define DEBUG 0
 #define MAX_TAREFAS 26
 #define MAX_VALOR 2048
+#define MAX_INSTANCIAS 64
 
 struct Tarefa_t {
     char name;
@@ -41,7 +43,7 @@ struct Instancia_t {
 struct Escalonamento_t{
     int tr; // numero de trocas
     int pr; // numero de preempcoes
-    char *gantt; // diagrama de gannt simplificado daquele escalonamento
+    char gantt[MAX_VALOR + 1]; // diagrama de gannt simplificado daquele escalonamento
 };
 
 int ler_entradas(int *n, int *t, struct Tarefa_t tarefas[]) {
@@ -118,33 +120,23 @@ int calcula_slack_time(struct Tarefa_t tarefas[], struct Instancia_t instancias[
 
 int main(void) {
     // declaracao de variaveis
-    int n = 0, t = 0; // numero de tarefas e tempo de simulacao
-    int exec = 0; // numero de execucoes do algoritmo em paralelo
 
-    struct Tarefa_t tarefas[MAX_TAREFAS]; // inicializa um vetor de tarefas
-    struct Escalonamento_t *escalonamentos = NULL; // inicializa um vetor com o resultado dos conjuntos de tarefas executados
+    int n = 0, t = 0;                                                   // numero de tarefas e tempo de simulacao
+    int exec = 0;                                                       // numero de execucoes do algoritmo em paralelo
+
+    struct Tarefa_t tarefas[MAX_TAREFAS];                               // inicializa um vetor de tarefas
+    struct Escalonamento_t escalonamentos[MAX_INSTANCIAS];              // resultado dos conjuntos de tarefas executados
 
     // fim da declaracao de variaveis
 
     // inicio chamada para loop de leitura das entradas
 
     while(ler_entradas(&n, &t, tarefas)) {
-
-        escalonamentos = realloc(escalonamentos, (exec + 1) * sizeof(struct Escalonamento_t));
-
-        if(escalonamentos == NULL) {
-            return 1;
-        }
-
+        
+        // inicializacao de variaveis
+        
         escalonamentos[exec].tr = 0;
         escalonamentos[exec].pr = 0;
-        escalonamentos[exec].gantt = malloc((t + 1) * sizeof(char));
-
-        if(escalonamentos[exec].gantt == NULL) {
-            free(escalonamentos);
-            return 1;
-        }
-
         escalonamentos[exec].gantt[t] = '\0';
 
         struct Instancia_t ready[MAX_TAREFAS];
@@ -158,15 +150,17 @@ int main(void) {
             ready[i].pronta = 0;
         }
 
-        // inicio do loop do escalonador
         int t_atual = 0;
-        int tarefa_mais_prioritaria = -1; // posicao da tarefa mais prioritaria
-        int tarefa_atual = -1; // posicao da tarefa atual executando
+        int tarefa_mais_prioritaria = -1;                               // posicao da tarefa mais prioritaria
+        int tarefa_atual = -1;                                          // posicao da tarefa atual executando
         int tarefa_anterior = -1;
+
+        // Passos do escalonador
 
         for(t_atual = 0; t_atual < t; t_atual++){
 
-            // 1. Verificar quais tarefas chegaram
+            // Verificar quais tarefas chegaram
+
             for(int i = 0; i < n; i++){
                 if((t_atual % tarefas[i].p) == 0) {
                     ready[i].name = tarefas[i].name;
@@ -177,41 +171,37 @@ int main(void) {
                 }
             }
 
-            // 2. Criar as novas instâncias
+            // Verificar se alguma tarefa perdeu deadline
 
-            // 3. Verificar se alguma tarefa perdeu deadline
-
-            // 4. Calcular slack das tarefas prontas
+            // Calcular slack das tarefas prontas
             tarefa_mais_prioritaria = calcula_slack_time(tarefas, ready, &n, &t_atual);
 
-            // 5. Escolher tarefa de menor slack
+            // Escolher tarefa de menor slack
             tarefa_atual = tarefa_mais_prioritaria;
 
-            // 6. Verificar se houve troca/preempção
+            // Verificar se houve troca/preempção
             if(tarefa_atual != -1) {
                 if(tarefa_anterior != tarefa_atual) {
-                    // era: if(tarefa_anterior != -1 && tarefa_anterior != tarefa_atual) {
-
                     escalonamentos[exec].tr++;
 
-                    if(ready[tarefa_anterior].c_falt > 0) {
+                    if(tarefa_anterior != -1 && ready[tarefa_anterior].c_falt > 0) {
                         escalonamentos[exec].pr++;
                     }
                 }
             }
 
-            // 7. Executar 1 unidade de tempo
+            // Executar 1 unidade de tempo
             if(tarefa_atual != -1) {
 
-                // 8. Decrementar c_falt
+                // Decrementar computacao que resta
                 ready[tarefa_atual].c_falt--;
 
-                // 9. Se terminou: remover da fila de prontas
+                // Remover da fila de prontas
                 if(ready[tarefa_atual].c_falt == 0) {
                     ready[tarefa_atual].pronta = 0;
                 }
 
-                // 10. Registrar tarefa no Gantt
+                // Registrar tarefa no Gantt
                 escalonamentos[exec].gantt[t_atual] = ready[tarefa_atual].name;
 
                 tarefa_anterior = tarefa_atual;
@@ -223,25 +213,17 @@ int main(void) {
 
                 escalonamentos[exec].gantt[t_atual] = '.';
                 tarefa_anterior = -1;
-
             }
         }
 
-        exec++;
+        // Imprimir resultado desta simulacao
+        printf("\n%s\n", escalonamentos[exec].gantt);
+        printf("%d %d \n\n", escalonamentos[exec].tr, escalonamentos[exec].pr);
+
+        // Proxima execucao
+        exec++; 
     }
 
-    // fim do loop do escalonador
-    // inicio do loop de simulacao
-    for (int i = 0; i < exec; i++) {
-        printf("%s\n", escalonamentos[i].gantt);
-        printf("%d %d \n\n", escalonamentos[i].tr, escalonamentos[i].pr);
-
-        free(escalonamentos[i].gantt);
-    }
-
-    free(escalonamentos);
-
-    // fim do loop de simulacao
 
     return 0;
 }
