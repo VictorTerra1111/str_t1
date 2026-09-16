@@ -4,9 +4,9 @@
 
 /*
 Code: Least Slack Time first
-Version: v0.4 // modelo PROUD.SHAME
+Version: v1.5 // modelo PROUD.SHAME
 Author: J. Victor T. P
-Date: 10/09/2026
+Date: 16/09/2026
 Definicao: LST da mais prioridade para quem tem menos slack time (folga), ou seja, 
 computacao_restante = computacao - tempo_atual + tempo_chegada 
 Tslack = deadline - tempo_atual - computacao_restante
