@@ -4,20 +4,15 @@
 
 /*
 Code: Least Slack Time first
-Version: v1.5 // modelo PROUD.SHAME
+Version: v1.8 // modelo PROUD.SHAME
 Author: J. Victor T. P
-Date: 16/09/2026
+Date: 17/09/2026
 Definicao: LST da mais prioridade para quem tem menos slack time (folga), ou seja, 
 computacao_restante = computacao - tempo_atual + tempo_chegada 
 Tslack = deadline - tempo_atual - computacao_restante
 
 */
 
-/*
-TO DO:
-Decidir o que fazer quando receber valores invalidos de n, t e das tarefas
-Verificar se alguma tarefa perdeu deadline
-*/
 
 #define DEBUG 0
 #define MAX_TAREFAS 26
@@ -155,11 +150,11 @@ int main(void) {
         int tarefa_atual = -1;                                          // posicao da tarefa atual executando
         int tarefa_anterior = -1;
 
-        // Passos do escalonador
+        // passos do escalonador
 
         for(t_atual = 0; t_atual < t; t_atual++){
 
-            // Verificar quais tarefas chegaram
+            // verifica quais tarefas chegaram
 
             for(int i = 0; i < n; i++){
                 if((t_atual % tarefas[i].p) == 0) {
@@ -171,15 +166,15 @@ int main(void) {
                 }
             }
 
-            // Verificar se alguma tarefa perdeu deadline
+            // verificar se alguma tarefa perdeu deadline
 
-            // Calcular slack das tarefas prontas
+            // calcular slack das tarefas prontas
             tarefa_mais_prioritaria = calcula_slack_time(tarefas, ready, &n, &t_atual);
 
-            // Escolher tarefa de menor slack
+            // escolhe tarefa de menor slack
             tarefa_atual = tarefa_mais_prioritaria;
 
-            // Verificar se houve troca/preempção
+            // verificar se houve troca/preempcao
             if(tarefa_atual != -1) {
                 if(tarefa_anterior != tarefa_atual) {
                     escalonamentos[exec].tr++;
@@ -190,7 +185,7 @@ int main(void) {
                 }
             }
 
-            // Executar 1 unidade de tempo
+            // executar 1 unidade de tempo
             if(tarefa_atual != -1) {
 
                 // Decrementar computacao que resta
@@ -207,20 +202,21 @@ int main(void) {
                 tarefa_anterior = tarefa_atual;
             }
             else {
+                // se a tarefa atual eh idle
                 if(tarefa_anterior != -1) {
-                    escalonamentos[exec].tr++;
+                    escalonamentos[exec].tr++; // se a anterior nao eh idle, troca de contexto
+                    escalonamentos[exec].pr++;
                 }
-
-                escalonamentos[exec].gantt[t_atual] = '.';
+                escalonamentos[exec].gantt[t_atual] = '.'; // coloca . no gantt
                 tarefa_anterior = -1;
             }
         }
 
-        // Imprimir resultado desta simulacao
+        // imprime resultado desta simulacao
         printf("\n%s\n", escalonamentos[exec].gantt);
         printf("%d %d \n\n", escalonamentos[exec].tr, escalonamentos[exec].pr);
 
-        // Proxima execucao
+        // vai pra proxima execucao
         exec++; 
     }
 
